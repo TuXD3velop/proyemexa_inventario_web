@@ -1,5 +1,24 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:proyemexa_inventario_web/presentation/utils/custom_drawer.dart';
+import 'package:proyemexa_inventario_web/services/http_model.dart';
+import 'package:http/http.dart' as http;
+
+//Future Get empleados
+Future<List<Empleados>> fetchEmpleados() async {
+  final response = await http.get(
+      Uri.parse('https://www.proyemexa.com.mx/inventario/public/nombres/all'));
+
+  if (response.statusCode == 200) {
+    List<dynamic> body = jsonDecode(response.body);
+    List<Empleados> empleados =
+        body.map((dynamic item) => Empleados.fromJson(item)).toList();
+
+    return empleados;
+  } else {
+    throw Exception('Failed to load empleados');
+  }
+}
 
 class Personal extends StatefulWidget {
   const Personal({Key? key}) : super(key: key);
@@ -10,7 +29,6 @@ class Personal extends StatefulWidget {
 
 class _PersonalState extends State<Personal> {
   final separador = 5.0;
-
   final style = TextStyle(
       color: Colors.grey.shade900, fontWeight: FontWeight.w400, fontSize: 14.0);
 
@@ -19,21 +37,46 @@ class _PersonalState extends State<Personal> {
     child: Text('NO seleccionado'),
   );
 
+  late Future<List<Empleados>> futureEmpleados;
+
+  @override
+  void initState() {
+    super.initState();
+    futureEmpleados = fetchEmpleados();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.grey.shade300,
-        drawer: buildDrawer(context),
-        appBar: AppBar(
-          title: const Text('Fichas Medicas'),
-          backgroundColor: Colors.orange[800],
-          actions: [
-            IconButton(onPressed: () {}, icon: const Icon(Icons.update))
-          ],
-        ),
-        body: const Center(
-          child: Text('data'),
-        ));
+      backgroundColor: Colors.grey.shade300,
+      drawer: buildDrawer(context),
+      appBar: AppBar(
+        title: const Text('Fichas Medicas'),
+        backgroundColor: Colors.orange[800],
+        actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.update))],
+      ),
+      body: Center(
+        child: FutureBuilder(
+            future: futureEmpleados,
+            builder: (context, AsyncSnapshot<List<Empleados>> snapshot) {
+              if (snapshot.hasData) {
+                debugPrint(snapshot.data.toString());
+                List<Empleados> empleados = snapshot.data!;
+                return ListView(
+                  children: empleados
+                      .map((Empleados empleados) => ListTile(
+                            title: Text(empleados.nombre),
+                            subtitle: Text(empleados.foto),
+                          ))
+                      .toList(),
+                );
+              } else if (snapshot.hasError) {
+                return Text('$snapshot.error');
+              }
+              return const CircularProgressIndicator();
+            }),
+      ),
+    );
   }
 
 /*
