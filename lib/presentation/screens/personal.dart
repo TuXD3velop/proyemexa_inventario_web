@@ -41,6 +41,8 @@ class _PersonalState extends State<Personal> {
   late Future<List<Empleados>> futureEmpleados;
   var tableKey = GlobalKey<DynamicTableState>();
   var myData;
+  late List<Empleados> empleados;
+
   @override
   void initState() {
     super.initState();
@@ -64,11 +66,7 @@ class _PersonalState extends State<Personal> {
               if (snapshot.hasData) {
                 debugPrint(snapshot.data.toString());
                 myData = snapshot.data!.toList();
-                List<Empleados> empleados = snapshot.data!;
-
-                empleados.forEach((element) {
-                  debugPrint(element.nombre);
-                });
+                empleados = snapshot.data!;
 
                 return SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -295,26 +293,21 @@ class _PersonalState extends State<Personal> {
     List<DynamicTableDataRow> row = [];
     List<DynamicTableDataCell> celda = List.empty(growable: true);
 
-    for (var element in myData) {
-      debugPrint(element);
-    }
+    var e = empleados.asMap();
 
-    celda.add(DynamicTableDataCell(value: 'Item1'));
-    celda.add(DynamicTableDataCell(value: 'Item2'));
-    celda.add(DynamicTableDataCell(value: 'Item3'));
-
-    row.add(
-      DynamicTableDataRow(
+    List.generate(
+      e.length,
+      (index) => DynamicTableDataRow(
         onSelectChanged: (value) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: value ?? false
-                  ? const Text("Row Selected index")
-                  : const Text("Row Unselected index"),
+                  ? Text("Row Selected index:$index")
+                  : Text("Row Unselected index:$index"),
             ),
           );
         },
-        index: 0,
+        index: index,
         cells: celda,
       ),
     );
