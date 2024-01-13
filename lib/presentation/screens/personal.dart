@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'package:dynamic_table/dynamic_table.dart';
 import 'package:flutter/material.dart';
 import 'package:proyemexa_inventario_web/presentation/utils/custom_drawer.dart';
 import 'package:proyemexa_inventario_web/services/http_model.dart';
@@ -22,7 +24,6 @@ Future<List<Empleados>> fetchEmpleados() async {
 
 class Personal extends StatefulWidget {
   const Personal({Key? key}) : super(key: key);
-
   @override
   State<Personal> createState() => _PersonalState();
 }
@@ -38,7 +39,8 @@ class _PersonalState extends State<Personal> {
   );
 
   late Future<List<Empleados>> futureEmpleados;
-
+  var tableKey = GlobalKey<DynamicTableState>();
+  var myData;
   @override
   void initState() {
     super.initState();
@@ -61,14 +63,119 @@ class _PersonalState extends State<Personal> {
             builder: (context, AsyncSnapshot<List<Empleados>> snapshot) {
               if (snapshot.hasData) {
                 debugPrint(snapshot.data.toString());
+                myData = snapshot.data!.toList();
                 List<Empleados> empleados = snapshot.data!;
-                return ListView(
-                  children: empleados
-                      .map((Empleados empleados) => ListTile(
-                            title: Text(empleados.nombre),
-                            subtitle: Text(empleados.foto),
-                          ))
-                      .toList(),
+
+                empleados.forEach((element) {
+                  debugPrint(element.nombre);
+                });
+
+                return SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: DynamicTable(
+                    key: tableKey,
+                    header: const Text("Person Table"),
+                    columns: _createColumns(),
+                    rows: _creteRows(),
+                    onRowEdit: (index, row) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Row Edited index:$index row:$row"),
+                        ),
+                      );
+                      //myData[index] = row;
+                      return true;
+                    },
+                    onRowDelete: (index, row) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Row Deleted index:$index row:$row"),
+                        ),
+                      );
+                      myData.removeAt(index);
+                      return true;
+                    },
+                    onRowSave: (index, old, newValue) {
+                      if (newValue[0] == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Name cannot be null"),
+                          ),
+                        );
+                        return null;
+                      }
+                      if (newValue[1] == null) {
+                        //If newly added row then add unique ID
+                        newValue[1] = Random()
+                            .nextInt(500)
+                            .toString(); // to add Unique ID because it is not editable
+                      }
+                      myData[index] = newValue; // Update data
+                      if (newValue[0] == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Name cannot be null"),
+                          ),
+                        );
+                        return null;
+                      }
+                      return newValue;
+                    },
+                    showActions: true,
+                    showAddRowButton: true,
+                    showDeleteAction: true,
+                    rowsPerPage: 5,
+                    showFirstLastButtons: true,
+                    availableRowsPerPage: const [
+                      5,
+                      10,
+                      20,
+                      40,
+                    ],
+                    dataRowMinHeight: 60,
+                    dataRowMaxHeight: 60,
+                    columnSpacing: 60,
+                    actionColumnTitle: "My Action Title",
+                    showCheckboxColumn: true,
+                    onSelectAll: (value) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: value ?? false
+                              ? const Text("All Rows Selected")
+                              : const Text("All Rows Unselected"),
+                        ),
+                      );
+                    },
+                    onRowsPerPageChanged: (value) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Rows Per Page Changed to $value"),
+                        ),
+                      );
+                    },
+                    actions: [
+                      IconButton(
+                        onPressed: () {
+                          for (var i = 0; i < myData.length; i += 2) {
+                            tableKey.currentState
+                                ?.selectRow(i, isSelected: true);
+                          }
+                        },
+                        icon: const Icon(Icons.select_all),
+                        tooltip: "Select all odd Values",
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          for (var i = 0; i < myData.length; i += 2) {
+                            tableKey.currentState
+                                ?.selectRow(i, isSelected: false);
+                          }
+                        },
+                        icon: const Icon(Icons.deselect_outlined),
+                        tooltip: "Unselect all odd Values",
+                      ),
+                    ],
+                  ),
                 );
               } else if (snapshot.hasError) {
                 return Text('$snapshot.error');
@@ -77,6 +184,142 @@ class _PersonalState extends State<Personal> {
             }),
       ),
     );
+  }
+
+  List<DynamicTableDataColumn> _createColumns() {
+    List<DynamicTableDataColumn> columns = [];
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('ID'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('Nombre'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('Apellido P'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('Apellido M'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('Seguro Social'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('Puesto'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('Cuadrilla'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('Tipo Sangre'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    columns.add(
+      DynamicTableDataColumn(
+        label: Container(
+          color: Colors.red,
+          child: const Text('Foto'),
+        ),
+        onSort: (columnIndex, ascending) {},
+        dynamicTableInputType: DynamicTableInputType.text(),
+      ),
+    );
+
+    return columns;
+  }
+
+  List<DynamicTableDataRow> _creteRows() {
+    List<DynamicTableDataRow> row = [];
+    List<DynamicTableDataCell> celda = List.empty(growable: true);
+
+    for (var element in myData) {
+      debugPrint(element);
+    }
+
+    celda.add(DynamicTableDataCell(value: 'Item1'));
+    celda.add(DynamicTableDataCell(value: 'Item2'));
+    celda.add(DynamicTableDataCell(value: 'Item3'));
+
+    row.add(
+      DynamicTableDataRow(
+        onSelectChanged: (value) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: value ?? false
+                  ? const Text("Row Selected index")
+                  : const Text("Row Unselected index"),
+            ),
+          );
+        },
+        index: 0,
+        cells: celda,
+      ),
+    );
+
+    return row;
   }
 
 /*
