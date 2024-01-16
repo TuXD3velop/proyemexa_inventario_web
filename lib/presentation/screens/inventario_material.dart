@@ -1,39 +1,152 @@
+import 'package:dynamic_table/dynamic_table.dart';
 import 'package:flutter/material.dart';
 import 'package:proyemexa_inventario_web/presentation/utils/custom_drawer.dart';
 
 class InventarioMateriales extends StatefulWidget {
-  const InventarioMateriales({Key? key}) : super(key: key);
+  const InventarioMateriales({super.key});
 
   @override
   State<InventarioMateriales> createState() => _InventarioMaterialesState();
 }
 
 class _InventarioMaterialesState extends State<InventarioMateriales> {
-  //Manejador de estados
-
-  List<Map> data = [];
-  List<String> stockCero = [];
-  List<String> stockBajo = [];
-  Map<String, dynamic> buffer = {};
-  bool _isStateManagerInit = false;
+  var tableKey = GlobalKey<DynamicTableState>();
+  List<String> genderDropdown = ["Male", "Female"];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.grey.shade300,
-        drawer: buildDrawer(context),
-        appBar: AppBar(
-          backgroundColor: Colors.greenAccent.shade700,
-          title: const Text('Inventario Materiales'),
-          actions: [
-            IconButton(
-                onPressed: () => Navigator.pushNamed(context, '/home'),
-                icon: const Icon(Icons.logout))
+      backgroundColor: Colors.grey.shade300,
+      drawer: buildDrawer(context),
+      appBar: AppBar(
+        backgroundColor: Colors.greenAccent.shade700,
+        title: const Text('Inventario Materiales'),
+        actions: [
+          IconButton(
+              onPressed: () => Navigator.pushNamed(context, '/home'),
+              icon: const Icon(Icons.logout))
+        ],
+      ),
+      body: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: DynamicTable(
+          key: tableKey,
+          header: const Text("Person Table"),
+          rowsPerPage: 5,
+          showFirstLastButtons: true,
+          availableRowsPerPage: const [5, 10, 15, 20], // rowsPerPage
+          columnSpacing: 60,
+          showCheckboxColumn: true,
+          onRowsPerPageChanged: (value) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Rows Per Page Changed to $value"),
+              ),
+            );
+          },
+          columns: [
+            DynamicTableDataColumn(
+                label: const Text("Name"),
+                onSort: (columnIndex, ascending) {},
+                dynamicTableInputType: DynamicTableTextInput()),
+            // dynamicTableInputType: DynamicTableInputType.text()),
+            DynamicTableDataColumn(
+                label: const Text("Unique ID"),
+                onSort: (columnIndex, ascending) {},
+                isEditable: false,
+                dynamicTableInputType: DynamicTableTextInput()),
+            // dynamicTableInputType: DynamicTableInputType.text()),
+            DynamicTableDataColumn(
+              label: const Text("Birth Date"),
+              onSort: (columnIndex, ascending) {},
+              // dynamicTableInputType: DynamicTableDateInput()
+              dynamicTableInputType: DynamicTableInputType.date(
+                context: context,
+                decoration: const InputDecoration(
+                    hintText: "Select Birth Date",
+                    suffixIcon: Icon(Icons.date_range),
+                    border: OutlineInputBorder()),
+                initialDate: DateTime(1900),
+                lastDate: DateTime.now().add(
+                  const Duration(days: 365),
+                ),
+              ),
+            ),
+            DynamicTableDataColumn(
+              label: const Text("Gender"),
+              dynamicTableInputType: DynamicTableInputType.dropDown<String>(
+                items: genderDropdown
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e),
+                        ))
+                    .toList(growable: false),
+                selectedItemBuilder: (context) {
+                  return genderDropdown
+                      .map((e) => Text(e))
+                      .toList(growable: false);
+                },
+                decoration: const InputDecoration(
+                    hintText: "Select Gender", border: OutlineInputBorder()),
+                displayBuilder: (value) =>
+                    value ??
+                    "", // How the string will be displayed in non editing mode
+              ),
+            ),
+            DynamicTableDataColumn(
+                label: const Text("Other Info"),
+                onSort: (columnIndex, ascending) {},
+                dynamicTableInputType: DynamicTableInputType.text(
+                  decoration: const InputDecoration(
+                    hintText: "Enter Other Info",
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 100,
+                )),
+          ],
+          rows: [
+            DynamicTableDataRow(
+              index: 0,
+              onSelectChanged: (value) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: value ?? false
+                        ? Text("Row Selected index:")
+                        : Text("Row Unselected index:"),
+                  ),
+                );
+              },
+              cells: [
+                DynamicTableDataCell(value: "Name"),
+                DynamicTableDataCell(value: "101"),
+                DynamicTableDataCell(value: DateTime(2000, 2, 11)),
+                DynamicTableDataCell(value: "Male"),
+                DynamicTableDataCell(value: "Some other info about Aakash"),
+              ],
+            ),
+            DynamicTableDataRow(
+              index: 1,
+              onSelectChanged: (value) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: value ?? false
+                        ? Text("Row Selected index:")
+                        : Text("Row Unselected index:"),
+                  ),
+                );
+              },
+              cells: [
+                DynamicTableDataCell(value: "Enquique"),
+                DynamicTableDataCell(value: "101"),
+                DynamicTableDataCell(value: DateTime(2000, 2, 11)),
+                DynamicTableDataCell(value: "Male"),
+                DynamicTableDataCell(value: "Some other info about Aakash"),
+              ],
+            ),
           ],
         ),
-        body: const Center(
-          child: Text('DATA'),
-        ));
+      ),
+    );
   }
 }
 

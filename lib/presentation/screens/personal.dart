@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:dynamic_table/dynamic_table.dart';
 import 'package:flutter/material.dart';
 import 'package:proyemexa_inventario_web/presentation/utils/custom_drawer.dart';
+import 'package:proyemexa_inventario_web/services/fake_api.dart';
 import 'package:proyemexa_inventario_web/services/http_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -46,7 +47,7 @@ class _PersonalState extends State<Personal> {
   @override
   void initState() {
     super.initState();
-    futureEmpleados = fetchEmpleados();
+    futureEmpleados = fetchkFakeApi();
   }
 
   @override
@@ -56,7 +57,7 @@ class _PersonalState extends State<Personal> {
       drawer: buildDrawer(context),
       appBar: AppBar(
         title: const Text('Fichas Medicas'),
-        backgroundColor: Colors.orange[800],
+        //backgroundColor: Colors.orange[800],
         actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.update))],
       ),
       body: Center(
@@ -64,9 +65,8 @@ class _PersonalState extends State<Personal> {
             future: futureEmpleados,
             builder: (context, AsyncSnapshot<List<Empleados>> snapshot) {
               if (snapshot.hasData) {
-                debugPrint(snapshot.data.toString());
-                myData = snapshot.data!.toList();
                 empleados = snapshot.data!;
+                myData = empleados.asMap();
 
                 return SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -122,7 +122,7 @@ class _PersonalState extends State<Personal> {
                     showActions: true,
                     showAddRowButton: true,
                     showDeleteAction: true,
-                    rowsPerPage: 5,
+                    rowsPerPage: 10,
                     showFirstLastButtons: true,
                     availableRowsPerPage: const [
                       5,
@@ -190,7 +190,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('ID'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -201,7 +200,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('Nombre'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -212,7 +210,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('Apellido P'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -223,7 +220,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('Apellido M'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -234,7 +230,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('Seguro Social'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -245,7 +240,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('Puesto'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -256,7 +250,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('Cuadrilla'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -267,7 +260,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('Tipo Sangre'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -278,7 +270,6 @@ class _PersonalState extends State<Personal> {
     columns.add(
       DynamicTableDataColumn(
         label: Container(
-          color: Colors.red,
           child: const Text('Foto'),
         ),
         onSort: (columnIndex, ascending) {},
@@ -290,13 +281,23 @@ class _PersonalState extends State<Personal> {
   }
 
   List<DynamicTableDataRow> _creteRows() {
-    List<DynamicTableDataRow> row = [];
-    List<DynamicTableDataCell> celda = List.empty(growable: true);
+    List<DynamicTableDataCell> _getListCells(int index) {
+      List<DynamicTableDataCell> celdas = [];
+      celdas.add(DynamicTableDataCell(value: myData[index]!.id));
+      celdas.add(DynamicTableDataCell(value: myData[index]!.nombre));
+      celdas.add(DynamicTableDataCell(value: myData[index]!.apellidoPaterno));
+      celdas.add(DynamicTableDataCell(value: myData[index]!.apellidoMaterno));
+      celdas.add(DynamicTableDataCell(value: myData[index]!.seguroSocial));
+      celdas.add(DynamicTableDataCell(value: myData[index]!.puesto));
+      celdas.add(DynamicTableDataCell(value: myData[index]!.cuadrilla));
+      celdas.add(DynamicTableDataCell(value: myData[index]!.tipoSangre));
+      celdas.add(DynamicTableDataCell(value: myData[index]!.foto));
 
-    var e = empleados.asMap();
+      return celdas;
+    }
 
-    List.generate(
-      e.length,
+    return List.generate(
+      myData.length,
       (index) => DynamicTableDataRow(
         onSelectChanged: (value) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -308,11 +309,9 @@ class _PersonalState extends State<Personal> {
           );
         },
         index: index,
-        cells: celda,
+        cells: _getListCells(index),
       ),
     );
-
-    return row;
   }
 
 /*
