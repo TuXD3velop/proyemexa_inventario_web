@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:dynamic_table/dynamic_table.dart';
 import 'package:flutter/material.dart';
 import 'package:proyemexa_inventario_web/presentation/utils/custom_drawer.dart';
-import 'package:proyemexa_inventario_web/services/fake_api.dart';
+//import 'package:proyemexa_inventario_web/services/fake_api.dart';
 import 'package:proyemexa_inventario_web/services/http_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -41,13 +41,12 @@ class _PersonalState extends State<Personal> {
 
   late Future<List<Empleados>> futureEmpleados;
   var tableKey = GlobalKey<DynamicTableState>();
-  var myData;
   late List<Empleados> empleados;
 
   @override
   void initState() {
     super.initState();
-    futureEmpleados = fetchkFakeApi();
+    futureEmpleados = fetchEmpleados();
   }
 
   @override
@@ -66,8 +65,6 @@ class _PersonalState extends State<Personal> {
             builder: (context, AsyncSnapshot<List<Empleados>> snapshot) {
               if (snapshot.hasData) {
                 empleados = snapshot.data!;
-                myData = empleados.asMap();
-
                 return SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
                   child: DynamicTable(
@@ -75,25 +72,41 @@ class _PersonalState extends State<Personal> {
                     header: const Text("Person Table"),
                     columns: _createColumns(),
                     rows: _creteRows(),
+                    //Row edit
                     onRowEdit: (index, row) {
+                      debugPrint('On row edit');
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("Row Edited index:$index row:$row"),
                         ),
                       );
-                      //myData[index] = row;
+                      empleados[index] = Empleados(
+                        id: row[0],
+                        nombre: row[1],
+                        apellidoPaterno: row[2],
+                        apellidoMaterno: row[3],
+                        seguroSocial: row[4],
+                        puesto: row[5],
+                        cuadrilla: row[6],
+                        tipoSangre: row[7],
+                        foto: row[8],
+                      );
                       return true;
                     },
+                    // Row  delete
                     onRowDelete: (index, row) {
+                      debugPrint('On row Delete');
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("Row Deleted index:$index row:$row"),
                         ),
                       );
-                      myData.removeAt(index);
+                      empleados.removeAt(index);
+                      //! Realizar la consulta al servidor
                       return true;
                     },
                     onRowSave: (index, old, newValue) {
+                      debugPrint('On row save');
                       if (newValue[0] == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -108,15 +121,20 @@ class _PersonalState extends State<Personal> {
                             .nextInt(500)
                             .toString(); // to add Unique ID because it is not editable
                       }
-                      myData[index] = newValue; // Update data
-                      if (newValue[0] == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Name cannot be null"),
-                          ),
-                        );
-                        return null;
-                      }
+                      // Update data
+                      empleados[index] = Empleados(
+                        id: newValue[0],
+                        nombre: newValue[1],
+                        apellidoPaterno: newValue[2],
+                        apellidoMaterno: newValue[3],
+                        seguroSocial: newValue[4],
+                        puesto: newValue[5],
+                        cuadrilla: newValue[6],
+                        tipoSangre: newValue[7],
+                        foto: newValue[8],
+                      );
+
+                      //! Realizar la consulta al servidor
                       return newValue;
                     },
                     showActions: true,
@@ -124,16 +142,11 @@ class _PersonalState extends State<Personal> {
                     showDeleteAction: true,
                     rowsPerPage: 10,
                     showFirstLastButtons: true,
-                    availableRowsPerPage: const [
-                      5,
-                      10,
-                      20,
-                      40,
-                    ],
+                    availableRowsPerPage: const [10, 20, 50, 100],
                     dataRowMinHeight: 60,
                     dataRowMaxHeight: 60,
                     columnSpacing: 60,
-                    actionColumnTitle: "My Action Title",
+                    actionColumnTitle: "Acciones",
                     showCheckboxColumn: true,
                     onSelectAll: (value) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -154,7 +167,7 @@ class _PersonalState extends State<Personal> {
                     actions: [
                       IconButton(
                         onPressed: () {
-                          for (var i = 0; i < myData.length; i += 2) {
+                          for (var i = 0; i < empleados.length; i += 2) {
                             tableKey.currentState
                                 ?.selectRow(i, isSelected: true);
                           }
@@ -164,7 +177,7 @@ class _PersonalState extends State<Personal> {
                       ),
                       IconButton(
                         onPressed: () {
-                          for (var i = 0; i < myData.length; i += 2) {
+                          for (var i = 0; i < empleados.length; i += 2) {
                             tableKey.currentState
                                 ?.selectRow(i, isSelected: false);
                           }
@@ -281,8 +294,10 @@ class _PersonalState extends State<Personal> {
   }
 
   List<DynamicTableDataRow> _creteRows() {
+    var myData = empleados.asMap();
     List<DynamicTableDataCell> _getListCells(int index) {
       List<DynamicTableDataCell> celdas = [];
+
       celdas.add(DynamicTableDataCell(value: myData[index]!.id));
       celdas.add(DynamicTableDataCell(value: myData[index]!.nombre));
       celdas.add(DynamicTableDataCell(value: myData[index]!.apellidoPaterno));

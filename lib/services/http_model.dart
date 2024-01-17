@@ -29,7 +29,7 @@ class Empleados {
       apellidoMaterno: json['apellidoMaterno'] as String,
       seguroSocial: json['seguroSocial'] as String,
       puesto: json['puesto'] as String,
-      cuadrilla: json['cuadrilla'] as String,
+      cuadrilla: json['nombreCuadrilla'] as String,
       tipoSangre: json['tipoSanguinio'] as String,
       foto: json['foto'] as String,
     );
