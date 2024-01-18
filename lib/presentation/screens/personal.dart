@@ -6,6 +6,7 @@ import 'package:proyemexa_inventario_web/presentation/utils/custom_drawer.dart';
 //import 'package:proyemexa_inventario_web/services/fake_api.dart';
 import 'package:proyemexa_inventario_web/services/http_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:proyemexa_inventario_web/services/http_request.dart';
 
 //Future Get empleados
 Future<List<Empleados>> fetchEmpleados() async {
@@ -20,6 +21,22 @@ Future<List<Empleados>> fetchEmpleados() async {
     return empleados;
   } else {
     throw Exception('Failed to load empleados');
+  }
+}
+
+Future<int> borrarEmpleado(int id) async {
+  const String urlBase = 'https://www.proyemexa.com.mx/inventario/public/';
+  const String path = "personal/delete/";
+  final url = Uri.parse('$urlBase$path$id');
+  debugPrint('URL delete = $url');
+  final response = await http.delete(url);
+
+  if (response.statusCode == 200) {
+    debugPrint('Delete Response code = 200');
+    debugPrint(response.body);
+    return response.statusCode;
+  } else {
+    throw Exception(response.body);
   }
 }
 
@@ -42,6 +59,8 @@ class _PersonalState extends State<Personal> {
   late Future<List<Empleados>> futureEmpleados;
   var tableKey = GlobalKey<DynamicTableState>();
   late List<Empleados> empleados;
+
+  final HttpServices httpServices = HttpServices();
 
   @override
   void initState() {
@@ -96,13 +115,19 @@ class _PersonalState extends State<Personal> {
                     // Row  delete
                     onRowDelete: (index, row) {
                       debugPrint('On row Delete');
+                      final indexFix = index - 1;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("Row Deleted index:$index row:$row"),
+                          content: Text("Row Deleted index:$indexFix row:$row"),
                         ),
                       );
-                      empleados.removeAt(index);
+                      empleados.removeAt(indexFix);
                       //! Realizar la consulta al servidor
+                      debugPrint(
+                          'A punto de eliminar el empleado con ID ${empleados[indexFix].id}');
+                      var idToDelete = int.parse(empleados[indexFix].id);
+                      httpServices.deleteEmpleado(idToDelete);
+
                       return true;
                     },
                     onRowSave: (index, old, newValue) {
